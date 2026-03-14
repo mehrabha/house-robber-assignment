@@ -1,4 +1,4 @@
-class HouseRobber:
+class HouseRobberDP:
     def __init__(self):
         """
         Initializes the house robber

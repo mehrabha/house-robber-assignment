@@ -1,9 +1,9 @@
 import pytest
-from houserobber import HouseRobber
+from houserobber_dp import HouseRobberDP
 
 @pytest.fixture
 def robber():
-    return HouseRobber()
+    return HouseRobberDP()
 
 def validate_heist(original_houses, time_limit, expected_score, actual_score, robbed_indices):
     """Detective function to verify the indexes returned make a valid, optimal robbery."""
@@ -92,3 +92,41 @@ def test_10_massive_capacity_test(robber):
     
     score, indices = robber.rob_houses(original, time_limit)
     validate_heist(original, time_limit, expected_score, score, indices)
+
+@pytest.mark.timeout(10)
+def test_11_the_memory_crusher(robber):
+    """
+    The N * W Trap.
+    N = 5,000 houses. W = 10,000 hours.
+    Your code will try to append 50,000,000 individual integers to lists.
+    In native Python, the overhead of creating 5,000 massive lists and 
+    constantly allocating memory for appending will likely exceed 10 seconds.
+    """
+    # 5000 identical houses taking 2 hours each
+    original = [(10, 2)] * 5000 
+    time_limit = 10000
+    expected_score = 50000 # Can rob all of them
+    
+    score, indices = robber.rob_houses(original, time_limit)
+    assert score == expected_score
+
+@pytest.mark.timeout(10)
+def test_12_the_sparse_weight_trap(robber):
+    """
+    The Massive W Trap. 
+    N = 10 houses. W = 100,000,000 hours.
+    Your code will try to initialize a single list of 100 MILLION zeros. 
+    It will instantly freeze, throttle your CPU, or throw a MemoryError.
+    """
+    # Just a few houses, but they take a massive amount of time
+    original = [
+        (500, 10000000), 
+        (1000, 25000000), 
+        (1500, 30000000),
+        (2000, 45000000)
+    ]
+    time_limit = 100000000 
+    
+    # We have time to rob the best combination
+    score, indices = robber.rob_houses(original, time_limit)
+    assert score > 0
