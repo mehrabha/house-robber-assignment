@@ -1,5 +1,5 @@
 import pytest
-from concurrent.futures import ThreadPoolExecutor, TimeoutError;
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from houserobber_dfs import HouseRobberDFS
 from houserobber_dp import HouseRobberDP
 
