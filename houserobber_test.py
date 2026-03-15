@@ -1,9 +1,11 @@
 import pytest
+from concurrent.futures import ThreadPoolExecutor, TimeoutError;
+from houserobber_dfs import HouseRobberDFS
 from houserobber_dp import HouseRobberDP
 
 @pytest.fixture
 def robber():
-    return HouseRobberDP()
+    return HouseRobberDFS()
 
 def validate_heist(original_houses, time_limit, expected_score, actual_score, robbed_indices):
     """Detective function to verify the indexes returned make a valid, optimal robbery."""
@@ -82,18 +84,32 @@ def test_09_large_dp_stress_test(robber):
     time_limit = 500
     expected_score = sum(range(501, 1001))
     
-    score, indices = robber.rob_houses(original, time_limit)
-    validate_heist(original, time_limit, expected_score, score, indices)
+    executor = ThreadPoolExecutor()
+    future = executor.submit(robber.rob_houses, original, time_limit)
+
+    try:
+        score, indices = future.result(timeout=5)
+        validate_heist(original, time_limit, expected_score, score, indices)
+    except TimeoutError:
+        pytest.fail("execution time limit exceeded!!")
+    finally:
+        executor.shutdown(wait=False)
 
 def test_10_massive_capacity_test(robber):
     original = [(1000000, 50)] * 100
     time_limit = 5000
     expected_score = 100000000
     
-    score, indices = robber.rob_houses(original, time_limit)
-    validate_heist(original, time_limit, expected_score, score, indices)
+    executor = ThreadPoolExecutor()
+    try:
+        future = executor.submit(robber.rob_houses, original, time_limit)
+        score, indices = future.result(timeout=5)
+        validate_heist(original, time_limit, expected_score, score, indices)
+    except:
+        pytest.fail("execution time limit exceed!!")
+    finally:
+        executor.shutdown(wait=False)
 
-@pytest.mark.timeout(10)
 def test_11_the_memory_crusher(robber):
     """
     The N * W Trap.
@@ -106,11 +122,18 @@ def test_11_the_memory_crusher(robber):
     original = [(10, 2)] * 5000 
     time_limit = 10000
     expected_score = 50000 # Can rob all of them
-    
-    score, indices = robber.rob_houses(original, time_limit)
-    assert score == expected_score
 
-@pytest.mark.timeout(10)
+    executor = ThreadPoolExecutor()
+    future = executor.submit(robber.rob_houses, original, time_limit)
+
+    try:
+        score, indices = future.result(timeout=10)
+        assert score == expected_score
+    except TimeoutError:
+        pytest.fail("execution time limit exceeded!!")
+    finally:
+        executor.shutdown(wait=False)
+
 def test_12_the_sparse_weight_trap(robber):
     """
     The Massive W Trap. 
@@ -127,6 +150,12 @@ def test_12_the_sparse_weight_trap(robber):
     ]
     time_limit = 100000000 
     
-    # We have time to rob the best combination
-    score, indices = robber.rob_houses(original, time_limit)
-    assert score > 0
+    executor = ThreadPoolExecutor()
+    try:
+        future = executor.submit(robber.rob_houses, original, time_limit)
+        score, indices = future.result(timeout=10)
+        assert score > 0
+    except TimeoutError:
+        pytest.fail("execution time limit exceeded")
+    finally:
+        executor.shutdown(wait=False)
